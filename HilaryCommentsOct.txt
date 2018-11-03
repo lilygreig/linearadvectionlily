@@ -1,0 +1,41 @@
+Great start. Good clear, correct code
+
+Your commit messages should describe in more detail what you have done.
+
+Make sure that your comments and doc strings are consistent with the code.
+
+You should have a .gitignore file so that you don't add binary files such as .ipynb and .pdf files to the repository
+
+In CTCS, you could call FTCS for one time step rather than re-imlementing it
+
+In CTCS, having done one time step of FTCS, you only need nt-1 time steps of CTCS
+
+Do not leave my teaching comments:
+# If you are using Python 2.7 rather than Python 3, import various
+# functions from Python 3 such as to use real number division
+# rather than integer division. ie 3/2  = 1.5  rather than 3/2 = 1
+#from __future__ import absolute_import, division, print_function
+at the top of files
+
+Lax created a lot of different schemes so your name and doc string should be more specific
+
+You can put all the definitions of schemes into advectionSchemes.py
+
+You do not need to store arrays for all values phiplus and phiminus. You only ever need 2 values at a time. Also, phiplus from one location becomes phiminus at the next location so you could re-use
+
+In FTBS you do not need:
+phiOld[(j)%nx]
+If you did need to do modulo arithmetic, 
+phiOld[j%nx]
+would be better. But you don't need modulo arithmetic for this one so 
+phiOld[j]
+is better.
+
+In BTCS you do not need separate arrays for phiOld and phi. You can just use the same one throughout.
+
+You will need to calculate more diagnostics analysing the behaviour of your schemes.
+
+Also use the square wave initial conditions to compare how different schemes advect discontinuities.
+
+You should also implement one of the schemes from chapter 6 of the notes to show that schemes exist that can do better than CTCS and FTBS
+
