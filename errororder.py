@@ -30,8 +30,8 @@ def main():
     phiFTBSex=np.zeros(dnx)
     #phiFTCSex=np.zeros(dnx)
     for i in range(nx_min,nx_max):
-        nx2 = i+2 
-        dx2[i-40] = (xmax - xmin)/nx2 
+        nx2 = i 
+        dx2[i-nx_min] = (xmax - xmin)/nx2 
         nt2 = nx2*nx_min 
         x = np.arange(xmin, xmax, dx2[i-40]) 
         phian=cosBell((x - c*nt2*dx2[i-40])%(xmax - xmin), 0, 0.75)
@@ -39,9 +39,9 @@ def main():
         philax2=lax(phiOld2.copy(), c, nt2)
         phiFTBS2=FTBS(phiOld2.copy(), c, nt2)
         phiCTCS2=FTBS(phiOld2.copy(), c, nt2)
-        philaxex[i-40]=l2ErrorNorm(philax2, phian)
-        phiFTBSex[i-40]=l2ErrorNorm(phiFTBS2, phian)
-        phiCTCSex[i-40]=l2ErrorNorm(phiCTCS2, phian)
+        philaxex[i-nx_min]=l2ErrorNorm(philax2, phian)
+        phiFTBSex[i-nx_min]=l2ErrorNorm(phiFTBS2, phian)
+        phiCTCSex[i-nx_min]=l2ErrorNorm(phiCTCS2, phian)
     # spatial points for plotting and for defining initial conditions
     dx3=dx2*dx2
     plt.figure(1)
