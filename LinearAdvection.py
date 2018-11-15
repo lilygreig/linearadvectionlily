@@ -14,14 +14,14 @@ def main():
     # Parameters
     xmin = 0
     xmax = 1
-    nx = 40
-    nt = 40
+    nx = 60
+    nt = 80
     c = 0.2
-# ftbs is stable for c between 0 and 1
 
     # Derived parameters
     dx = (xmax - xmin)/nx
-
+    print(dx**2)
+    print(dx)
     # spatial points for plotting and for defining initial conditions
     x = np.arange(xmin, xmax, dx)
 
@@ -68,47 +68,15 @@ def main():
     
 
     #total variance
-    #not sure how to put this in a function as it would involve reading in a function (the schemes), unless i put 
-    #it in the same file as advection schemes which already has those functions defined in it! 
-    # inputs to said function would be phiOld, c, nt, and outputs would be TVCTCS_tot, TVlax_tot, TVFTBS_tot
-    TVCTCS=np.zeros(nx)
-    TVCTCS_tot=np.zeros(nt-2)
-    TVlax=np.zeros(nx)
-    TVFTBS=np.zeros(nx)
-    TVlax_tot=np.zeros(nt-2)
-    TVFTBS_tot=np.zeros(nt-2)
-    for i in range(2,nt):
-        phiCTCS2 = CTCS(phiOld.copy(), c, i)
-        philax2 = lax(phiOld.copy(), c, i)
-        phiFTBS2 = FTBS(phiOld.copy(), c, i)
-        for j in range(nx):
-            TVCTCS[j]=abs(phiCTCS2[(j+1)%nx]-phiCTCS2[j])
-            TVlax[j]=abs(philax2[(j+1)%nx]-philax2[j])
-            TVFTBS[j]=abs(phiFTBS2[(j+1)%nx]-phiFTBS2[j])
-        TVCTCS_tot[i-2]=sum(TVCTCS)
-        TVlax_tot[i-2]=sum(TVlax)
-        TVFTBS_tot[i-2]=sum(TVFTBS)
-    
-    # find the error of schemes against time
-    phiCTCSet=np.zeros(nt)
-    philaxet=np.zeros(nt)
-    phiBTCSet=np.zeros(nt)
-    phiFTBSet=np.zeros(nt)
-    phiFTCSet=np.zeros(nt)
-    for i in range(2,nt):
-        phiCTCSt = CTCS(phiOld.copy(), c, i)
-        phiBTCSt = BTCS(phiOld.copy(), c, i)
-        phiFTCSt = FTCS(phiOld.copy(), c, i)
-        phiFTBSt = FTBS(phiOld.copy(), c, i)
-        philaxt = lax(phiOld.copy(), c, i)
-        phiAnalytict = cosBell((x - c*i*dx)%(xmax - xmin), 0, 0.75)
-        phiCTCSet[i]=l2ErrorNorm(phiCTCSt, phiAnalytict)
-        philaxet[i]=l2ErrorNorm(philaxt, phiAnalytict)
-        phiBTCSet[i]=l2ErrorNorm(phiBTCSt, phiAnalytict)
-        phiFTBSet[i]=l2ErrorNorm(phiFTBSt, phiAnalytict)
-        phiFTCSet[i]=l2ErrorNorm(phiFTCSt, phiAnalytict)
-        
+    TVCTCS_tot, TVFTBS_tot, TVlax_tot = TV(phiOld.copy(), nt, c)   
+    # find the l2 error of schemes at different times
+    phiCTCSet, phiBTCSet, phiFTCSet, phiFTBSet, philaxet = l2t(phiOld.copy(), nt, c, xmax, xmin, dx, x)
     time=np.linspace(2,nt,nt)
+    # order of convergence
+    nx_min=30
+    nx_max=60
+    phiFTBSex, phiCTCSex, phiFTCSex, phiBTCSex, philaxex, dx2, dx21, dx32 = order(xmin, xmax, nx_min, nx_max, c) 
+    
     
     # Plot the solutions for the cosbell function
     font = {'size'   : 20}
@@ -129,7 +97,6 @@ def main():
     plt.legend(bbox_to_anchor=(1.15 , 1.1))
     plt.xlabel('$x$')
     plt.savefig('plots/cosbell.pdf', bbox_inches="tight")
-    
     # Plot the solutions for the squarewave function
     fig=plt.figure(2)
     plt.clf()
@@ -147,12 +114,11 @@ def main():
     plt.legend(bbox_to_anchor=(1.15 , 1.1))
     plt.xlabel('$x$')
     plt.savefig('plots/square.pdf', bbox_inches="tight")
-    
     # plot the error of schemes against time
     plt.figure(3)
     plt.plot(time, phiCTCSet, label='CTCS,l2', color='green')
     plt.plot(time, philaxet, label='lax l2', color='magenta')
-    plt.plot(time, phiFTCSet, label='FTCS l2', color='blue')
+    #plt.plot(time, phiFTCSet, label='FTCS l2', color='blue')
     plt.plot(time, phiFTBSet, label='FTBS l2', color='red')
     plt.plot(time, phiBTCSet, label='BTCS l2', color='yellow')
     plt.legend(bbox_to_anchor=(1.15 , 1.1))
@@ -175,7 +141,7 @@ def main():
     plt.plot(time2,phibound[:,1])
     plt.plot(time2,phiboundl[:,0], color='magenta')
     plt.plot(time2,phiboundl[:,1], color='magenta')
-    
+    # lax better than ctcs cos TV is less
     
     # plotting total variance
     time3=np.linspace(2,(nt-2),(nt-2))
@@ -188,7 +154,21 @@ def main():
     plt.legend(bbox_to_anchor=(1.15 , 1.1))
     plt.savefig('plots/TV.pdf', bbox_inches="tight")
     
-    
+    #plot order of convergence
+    plt.figure(6)
+    plt.plot(dx2,phiCTCSex, label='CTCS,l2', color="green", marker="*")
+    plt.plot(dx2,phiBTCSex, label='BTCS,l2', color="red", marker="x")
+    plt.plot(dx2,phiFTCSex, label='FTCS,l2', color="blue", marker="v")
+    plt.plot(dx2,phiFTBSex, label='FTBS,l2', color="yellow", marker="o")
+    plt.plot(dx2,philaxex, label='lax,l2', color="magenta", marker=".")
+    plt.plot(dx2,dx21, label='$\Delta x$', color="orange", linestyle="--")
+    plt.plot(dx2,dx32, label='$\Delta x^2$', color="brown", linestyle="--")
+    plt.yscale('log')
+    plt.xscale('log')
+    plt.xlabel('$\Delta x$')
+    plt.ylabel('l2')
+    plt.legend(bbox_to_anchor=(1.15 , 1.1))
+    plt.savefig('plots/order.pdf', bbox_inches="tight")
 
     input('press return to save file and continue')
     
