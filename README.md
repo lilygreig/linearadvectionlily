@@ -1,5 +1,3 @@
 # linearadvectionlily
-MAIN CODE:LinearAdvection.py
-Progress so far of numerical methods for solving linear advection equation. Building on Hilary's code.
-diagnostics.py, advectionSchemes.py, initialconditions.py, and skeleton of LinearAdvection.py. 
-total variance calculations are in LinearAdvection.py at the moment
+MAIN CODE to run to produce all plots:LinearAdvection.py
+
