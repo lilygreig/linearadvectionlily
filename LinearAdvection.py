@@ -20,8 +20,6 @@ def main():
 
     # Derived parameters
     dx = (xmax - xmin)/nx
-    print(dx**2)
-    print(dx)
     # spatial points for plotting and for defining initial conditions
     x = np.arange(xmin, xmax, dx)
 
@@ -161,7 +159,7 @@ def main():
     plt.figure(3)
     plt.plot(time, phiCTCSet, label='CTCS,l2', color='green')
     plt.plot(time, philaxet, label='LW l2', color='magenta')
-    #plt.plot(time, phiFTCSet, label='FTCS l2', color='blue')
+    plt.plot(time, phiFTCSet, label='FTCS l2', color='blue')
     plt.plot(time, phiFTBSet, label='FTBS l2', color='red')
     plt.plot(time, phiBTCSet, label='BTCS l2', color='yellow')
     plt.legend(bbox_to_anchor=(1.15 , 1.1))
@@ -318,9 +316,6 @@ def main():
     plt.xlabel('$c$')
     plt.ylabel('$l2$')
     plt.savefig('plots/stabilityftbs.pdf', bbox_inches="tight")
-    print(errorFTBS)
-    print(errorFTCS)
-    print(errorlax)
     
 main()
 
