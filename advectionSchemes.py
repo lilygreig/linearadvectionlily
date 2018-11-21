@@ -61,9 +61,7 @@ def CTCS(phiOld, c, nt):
     phi = phiOld.copy()
     phivold= phiOld.copy()
     phi2=phiOld.copy()
-    #how do i get n-1 for the first time step
-    #we use initial conditions for the phi(n-1) but then we skip to phi(n+1) so how do we generate the points for phi(n)?
-    #use the scheme FTCS for one time step, can call previously defined function
+    #use the scheme FTCS for one time step
     phi2 = FTCS(phiOld, c, 1)
       
     # CTCS for each time-step
@@ -121,7 +119,7 @@ def lax(phiOld, c, nt):
     for it in range(nt):
         # Loop through all space using remainder after division (%)
         # to cope with periodic boundary conditions
-        phiminus=0.5*(1+c)*phiOld[39] +0.5*(1-c)*phiOld[0]
+        phiminus=0.5*(1+c)*phiOld[nx-1] +0.5*(1-c)*phiOld[0]
         for j in range(nx):
             #lax wendroff 
             phiplus = 0.5*(1+c)*phiOld[j] +0.5*(1-c)*phiOld[(j+1)%nx]
