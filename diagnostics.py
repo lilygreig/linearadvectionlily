@@ -47,73 +47,113 @@ def TV(phiOld, nt, c):
     "Calculates the total variation of a scheme with respect to time"
     nx=len(phiOld)
     TVCTCS=np.zeros(nx)
-    TVCTCS_tot=np.zeros(nt-2)
     TVlax=np.zeros(nx)
     TVFTBS=np.zeros(nx)
+    TVFTCS=np.zeros(nx)
+    TVBTCS=np.zeros(nx)
+    # set min no. of time steps to 2
+    TVCTCS_tot=np.zeros(nt-2)
     TVlax_tot=np.zeros(nt-2)
     TVFTBS_tot=np.zeros(nt-2)
+    TVFTCS_tot=np.zeros(nt-2)
+    TVBTCS_tot=np.zeros(nt-2)
     for i in range(2,nt):
+        #advect profiles i timesteps
         phiCTCS2 = CTCS(phiOld.copy(), c, i)
         philax2 = lax(phiOld.copy(), c, i)
         phiFTBS2 = FTBS(phiOld.copy(), c, i)
+        phiFTCS2 = FTCS(phiOld.copy(), c, i)
+        phiBTCS2 = BTCS(phiOld.copy(), c, i)
         for j in range(nx):
+            #variation for each spatial point
             TVCTCS[j]=abs(phiCTCS2[(j+1)%nx]-phiCTCS2[j])
             TVlax[j]=abs(philax2[(j+1)%nx]-philax2[j])
             TVFTBS[j]=abs(phiFTBS2[(j+1)%nx]-phiFTBS2[j])
+            TVFTCS[j]=abs(phiFTCS2[(j+1)%nx]-phiFTCS2[j])
+            TVBTCS[j]=abs(phiBTCS2[(j+1)%nx]-phiBTCS2[j])
+        # sum to get total variation for i timesteps
         TVCTCS_tot[i-2]=sum(TVCTCS)
         TVlax_tot[i-2]=sum(TVlax)
         TVFTBS_tot[i-2]=sum(TVFTBS)
-    return TVCTCS_tot, TVFTBS_tot, TVlax_tot
+        TVFTCS_tot[i-2]=sum(TVFTCS)
+        TVBTCS_tot[i-2]=sum(TVBTCS)
+    return TVCTCS_tot, TVFTBS_tot, TVlax_tot, TVFTCS_tot, TVBTCS_tot
 
 
 def order(xmin, xmax, nx_min, nx_max, c):
-    "calculates order of convergence"
+    "calculates order of convergence, calculates l2 error as dx changes"
+    #range of nx
     dnx= nx_max-nx_min
-    #nt = 5
-    dx2=np.zeros(dnx)
+    dx1=np.zeros(dnx)
     phiCTCSex=np.zeros(dnx)
     philaxex=np.zeros(dnx)
     phiBTCSex=np.zeros(dnx)
     phiFTBSex=np.zeros(dnx)
     phiFTCSex=np.zeros(dnx)
     for i in range(nx_min,nx_max):
-        nx2 = i 
-        dx2[i-nx_min] = (xmax - xmin)/nx2 
-        nt2 = nx2
-        x = np.arange(xmin, xmax, dx2[i-nx_min]) 
-        phian=cosBell((x - c*nt2*dx2[i-nx_min])%(xmax - xmin), 0, 0.75)
+        nx1 = i
+        #calculate new dx and store it
+        dx1[i-nx_min] = (xmax - xmin)/nx1
+        # calculate new nt to keep c constant
+        nt1 = nx1
+        x = np.arange(xmin, xmax, dx1[i-nx_min])
+        #analytic solution for these parameters
+        phian=cosBell((x - c*nt1*dx1[i-nx_min])%(xmax - xmin), 0, 0.75)
         phiOld2=cosBell(x, 0, 0.75)
-        philax2=lax(phiOld2.copy(), c, nt2)
-        phiFTBS2=FTBS(phiOld2.copy(), c, nt2)
-        phiCTCS2=CTCS(phiOld2.copy(), c, nt2)
-        phiBTCS2=BTCS(phiOld2.copy(), c, nt2)
-        phiFTCS2=FTCS(phiOld2.copy(), c, nt2)
+        #advect initial conditions using schemes and new parameters
+        philax2=lax(phiOld2.copy(), c, nt1)
+        phiFTBS2=FTBS(phiOld2.copy(), c, nt1)
+        phiCTCS2=CTCS(phiOld2.copy(), c, nt1)
+        phiBTCS2=BTCS(phiOld2.copy(), c, nt1)
+        phiFTCS2=FTCS(phiOld2.copy(), c, nt1)
+        # calculate l2 for new dx value
         philaxex[i-nx_min]=l2ErrorNorm(philax2, phian)
         phiFTBSex[i-nx_min]=l2ErrorNorm(phiFTBS2, phian)
         phiCTCSex[i-nx_min]=l2ErrorNorm(phiCTCS2, phian)
         phiBTCSex[i-nx_min]=l2ErrorNorm(phiBTCS2, phian)
         phiFTCSex[i-nx_min]=l2ErrorNorm(phiFTCS2, phian)
-    # do something with these slopes!! atm they are not outputted
-    laxslope, laxintercept = np.polyfit(np.log(dx2), np.log(philaxex), 1)
-    #print("lax slope =", laxslope)
-    ftcsslope, ftcsintercept = np.polyfit(np.log(dx2), np.log(phiFTCSex), 1)
-    #print("ftcs slope =",ftcsslope)
-    ctcsslope, ctcsintercept = np.polyfit(np.log(dx2), np.log(phiCTCSex), 1)
-    #print("ctcs slope =", ctcsslope)
-    btcsslope, btcsintercept = np.polyfit(np.log(dx2), np.log(phiBTCSex), 1)
-    #print("btcs slope =", btcsslope)
-    ftbsslope, ftbsintercept = np.polyfit(np.log(dx2), np.log(phiFTBSex), 1)
-    #print("ftbs slope =", ftbsslope)
-    dx3=(dx2*dx2)
-    # set dx slope so that the first value is the first value of ftbs
-    #but these value will be logged
-    dx21=min(philaxex)*dx2/min(dx2)
-    dx32=min(philaxex)*dx3/min(dx3)
-    phiFTBSex=phiFTBSex*min(philaxex)/min(phiFTBSex)
-    phiCTCSex=phiCTCSex*min(philaxex)/min(phiCTCSex)
-    phiBTCSex=phiBTCSex*min(philaxex)/min(phiBTCSex)
-    philaxex=philaxex*min(philaxex)/min(philaxex)
-    phiFTCSex=phiFTCSex*min(philaxex)/min(phiFTCSex)
+    dx2=(dx1*dx1)
+    # set all slopes to plot from the same point
+    # choose this point to be the minimum value of all the error
+    minval=min(min(philaxex), min(phiFTBSex), min(phiCTCSex), min(phiBTCSex), min(phiFTCSex))
+    #but all error values will be logged so instead of adding constant, multiply by
+    #constants
+    dx1=minval*dx1/min(dx1)
+    dx2=minval*dx2/min(dx2)
+    phiFTBSex=phiFTBSex*minval/min(phiFTBSex)
+    phiCTCSex=phiCTCSex*minval/min(phiCTCSex)
+    phiBTCSex=phiBTCSex*minval/min(phiBTCSex)
+    philaxex=philaxex*minval/min(philaxex)
+    phiFTCSex=phiFTCSex*minval/min(phiFTCSex)
     
-    return phiFTBSex, phiCTCSex, phiFTCSex, phiBTCSex, philaxex, dx2, dx21, dx32
+    return phiFTBSex, phiCTCSex, phiFTCSex, phiBTCSex, philaxex, dx1, dx1, dx2
 
+
+def stability(phiOld, dx, xmax, xmin, x, c, nt):
+    "Plots l2 error for all schemes for different values of c, with"
+    "varying nt to keep total time constant"
+    # choose a constant for c*nt
+    cst=nt*1.2
+    errorCTCS=np.zeros(len(c))
+    errorBTCS=np.zeros(len(c))
+    errorFTCS=np.zeros(len(c))
+    errorFTBS=np.zeros(len(c))
+    errorlax=np.zeros(len(c))
+    j=0
+    for i in c:
+        #keep c*nt as this constant to ensure total time remains the same
+        nt=int(abs(cst/i))
+        phiCTCSs=CTCS(phiOld.copy(), i, nt)
+        phiBTCSs=BTCS(phiOld.copy(), i, nt)
+        phiFTCSs=FTCS(phiOld.copy(), i, nt)
+        phiFTBSs=FTBS(phiOld.copy(), i, nt)
+        philaxs=lax(phiOld.copy(), i, nt)
+        phian=cosBell((x - i*nt*dx)%(xmax - xmin), 0, 0.75)
+        # calculate and store error for new c value for all schemes
+        errorCTCS[j]=l2ErrorNorm(phiCTCSs, phian)
+        errorBTCS[j]=l2ErrorNorm(phiBTCSs, phian)
+        errorFTCS[j]=l2ErrorNorm(phiFTCSs, phian)
+        errorFTBS[j]=l2ErrorNorm(phiFTBSs, phian)
+        errorlax[j]=l2ErrorNorm(philaxs, phian)
+        j=j+1
+    return errorCTCS, errorBTCS, errorFTBS, errorFTCS, errorlax
