@@ -3,12 +3,12 @@
 
 import numpy as np
 from advectionSchemes import *
-from initialConditions import * 
+from initialConditions import *
 
 def l2ErrorNorm(phi, phiExact):
     "Calculates the l2 error norm (RMS error) of phi in comparison to"
     "phiExact"
-    
+
     # calculate the error and the RMS error norm
     phiError = phi - phiExact
     l2 = np.sqrt(sum(phiError**2)/sum(phiExact**2))
@@ -115,7 +115,7 @@ def order(xmin, xmax, nx_min, nx_max, c):
     dx2=(dx1*dx1)
     # set all slopes to plot from the same point
     # choose this point to be the minimum value of all the error
-    minval=min(min(philaxex), min(phiFTBSex), min(phiCTCSex), min(phiBTCSex), min(phiFTCSex))
+    minval=min(max(philaxex), max(phiFTBSex), max(phiCTCSex), max(phiBTCSex), max(phiFTCSex))
     #but all error values will be logged so instead of adding constant, multiply by
     #constants
     dx1=minval*dx1/min(dx1)
@@ -125,7 +125,6 @@ def order(xmin, xmax, nx_min, nx_max, c):
     phiBTCSex=phiBTCSex*minval/min(phiBTCSex)
     philaxex=philaxex*minval/min(philaxex)
     phiFTCSex=phiFTCSex*minval/min(phiFTCSex)
-    
     return phiFTBSex, phiCTCSex, phiFTCSex, phiBTCSex, philaxex, dx1, dx1, dx2
 
 
